@@ -1,5 +1,5 @@
-inlcude與lib資料夾放到專案預設根目錄\
-![image](include_and_lib.PNG)
+inlcude與lib資料夾放到專案預設根目錄
+\![image](include_and_lib.PNG)
 組態:所有組態	平台:所有平台
 屬性->VC++->Include目錄 => 加入include、include\opencv2
 ![image](include.PNG)
