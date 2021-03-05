@@ -134,7 +134,7 @@ CV__DNN_INLINE_NS_BEGIN
         virtual void setOutShape(const MatShape &outTailShape = MatShape()) = 0;
 
         /** @deprecated Use flag `produce_cell_output` in LayerParams.
-          * @brief Specifies either interpret first dimension of input blob as timestamp dimension either as sample.
+          * @brief Specifies either interpret first dimension of input blob as timestamp dimenion either as sample.
           *
           * If flag is set to true then shape of input blob will be interpreted as [`T`, `N`, `[data dims]`] where `T` specifies number of timestamps, `N` is number of independent streams.
           * In this case each forward() call will iterate through `T` timestamps and update layer's state `T` times.
@@ -250,8 +250,7 @@ CV__DNN_INLINE_NS_BEGIN
         std::vector<size_t> pads_begin, pads_end;
         CV_DEPRECATED_EXTERNAL Size kernel, stride, pad;
         CV_DEPRECATED_EXTERNAL int pad_l, pad_t, pad_r, pad_b;
-        bool globalPooling; //!< Flag is true if at least one of the axes is global pooled.
-        std::vector<bool> isGlobalPooling;
+        bool globalPooling;
         bool computeMaxIdx;
         String padMode;
         bool ceilMode;
@@ -556,30 +555,6 @@ CV__DNN_INLINE_NS_BEGIN
         static Ptr<Layer> create(const LayerParams& params);
     };
 
-    class CV_EXPORTS DataAugmentationLayer : public Layer
-    {
-    public:
-        static Ptr<DataAugmentationLayer> create(const LayerParams& params);
-    };
-
-    class CV_EXPORTS CorrelationLayer : public Layer
-    {
-    public:
-        static Ptr<CorrelationLayer> create(const LayerParams& params);
-    };
-
-    class CV_EXPORTS AccumLayer : public Layer
-    {
-    public:
-        static Ptr<AccumLayer> create(const LayerParams& params);
-    };
-
-    class CV_EXPORTS FlowWarpLayer : public Layer
-    {
-    public:
-        static Ptr<FlowWarpLayer> create(const LayerParams& params);
-    };
-
     class CV_EXPORTS PriorBoxLayer : public Layer
     {
     public:
@@ -595,19 +570,9 @@ CV__DNN_INLINE_NS_BEGIN
     class CV_EXPORTS RegionLayer : public Layer
     {
     public:
-        float nmsThreshold;
-
         static Ptr<RegionLayer> create(const LayerParams& params);
     };
 
-    /**
-     * @brief Detection output layer.
-     *
-     * The layer size is: @f$ (1 \times 1 \times N \times 7) @f$
-     *    where N is [keep_top_k] parameter multiplied by batch size. Each row is:
-     *    [image_id, label, confidence, xmin, ymin, xmax, ymax]
-     *    where image_id is the index of image input in the batch.
-     */
     class CV_EXPORTS DetectionOutputLayer : public Layer
     {
     public:

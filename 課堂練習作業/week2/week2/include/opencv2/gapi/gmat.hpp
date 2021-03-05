@@ -2,7 +2,7 @@
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html.
 //
-// Copyright (C) 2018-2020 Intel Corporation
+// Copyright (C) 2018 Intel Corporation
 
 
 #ifndef OPENCV_GAPI_GMAT_HPP
@@ -14,6 +14,8 @@
 #include <opencv2/gapi/opencv_includes.hpp>
 #include <opencv2/gapi/gcommon.hpp> // GShape
 
+#include <opencv2/gapi/own/types.hpp> // cv::gapi::own::Size
+#include <opencv2/gapi/own/convert.hpp> // to_own
 #include <opencv2/gapi/own/assert.hpp>
 
 // TODO GAPI_EXPORTS or so
@@ -44,12 +46,11 @@ struct GOrigin;
  *    cv::GMat           | cv::Mat
  *    cv::GScalar        | cv::Scalar
  *    `cv::GArray<T>`    | std::vector<T>
- *    `cv::GOpaque<T>`   | T
  */
-class GAPI_EXPORTS_W_SIMPLE GMat
+class GAPI_EXPORTS GMat
 {
 public:
-    GAPI_WRAP GMat();                       // Empty constructor
+    GMat();                                 // Empty constructor
     GMat(const GNode &n, std::size_t out);  // Operation result constructor
 
     GOrigin& priv();                        // Internal use only
@@ -65,7 +66,9 @@ public:
     using GMat::GMat;
 };
 
-class RMat;
+namespace gapi { namespace own {
+    class Mat;
+}}//gapi::own
 
 /** @} */
 
@@ -78,11 +81,11 @@ struct GAPI_EXPORTS GMatDesc
     // FIXME: Default initializers in C++14
     int depth;
     int chan;
-    cv::Size size; // NB.: no multi-dimensional cases covered yet
+    cv::gapi::own::Size size; // NB.: no multi-dimensional cases covered yet
     bool planar;
     std::vector<int> dims; // FIXME: Maybe it's real questionable to have it here
 
-    GMatDesc(int d, int c, cv::Size s, bool p = false)
+    GMatDesc(int d, int c, cv::gapi::own::Size s, bool p = false)
         : depth(d), chan(c), size(s), planar(p) {}
 
     GMatDesc(int d, const std::vector<int> &dd)
@@ -113,29 +116,40 @@ struct GAPI_EXPORTS GMatDesc
     // (it handles the case when
     // 1-channel mat can be reinterpreted as is (1-channel mat)
     // and as a 3-channel planar mat with height divided by 3)
-    bool canDescribe(const cv::Mat& mat) const;
-
-    bool canDescribe(const cv::RMat& mat) const;
+    bool canDescribe(const cv::gapi::own::Mat& mat) const;
 
     // Meta combinator: return a new GMatDesc which differs in size by delta
     // (all other fields are taken unchanged from this GMatDesc)
     // FIXME: a better name?
-    GMatDesc withSizeDelta(cv::Size delta) const
+    GMatDesc withSizeDelta(cv::gapi::own::Size delta) const
     {
         GMatDesc desc(*this);
         desc.size += delta;
         return desc;
     }
+#if !defined(GAPI_STANDALONE)
+    GMatDesc withSizeDelta(cv::Size delta) const
+    {
+        return withSizeDelta(to_own(delta));
+    }
+
+    GMatDesc withSize(cv::Size sz) const
+    {
+        return withSize(to_own(sz));
+    }
+
+    bool canDescribe(const cv::Mat& mat) const;
+#endif // !defined(GAPI_STANDALONE)
     // Meta combinator: return a new GMatDesc which differs in size by delta
     // (all other fields are taken unchanged from this GMatDesc)
     //
     // This is an overload.
     GMatDesc withSizeDelta(int dx, int dy) const
     {
-        return withSizeDelta(cv::Size{dx,dy});
+        return withSizeDelta(cv::gapi::own::Size{dx,dy});
     }
 
-    GMatDesc withSize(cv::Size sz) const
+    GMatDesc withSize(cv::gapi::own::Size sz) const
     {
         GMatDesc desc(*this);
         desc.size = sz;
@@ -204,24 +218,17 @@ struct GAPI_EXPORTS GMatDesc
 static inline GMatDesc empty_gmat_desc() { return GMatDesc{-1,-1,{-1,-1}}; }
 
 #if !defined(GAPI_STANDALONE)
+class Mat;
+GAPI_EXPORTS GMatDesc descr_of(const cv::Mat &mat);
 GAPI_EXPORTS GMatDesc descr_of(const cv::UMat &mat);
 #endif // !defined(GAPI_STANDALONE)
 
-//Fwd declarations
+/** @} */
+
+// FIXME: WHY??? WHY it is under different namespace?
 namespace gapi { namespace own {
-    class Mat;
     GAPI_EXPORTS GMatDesc descr_of(const Mat &mat);
 }}//gapi::own
-
-GAPI_EXPORTS GMatDesc descr_of(const RMat &mat);
-
-#if !defined(GAPI_STANDALONE)
-GAPI_EXPORTS GMatDesc descr_of(const cv::Mat &mat);
-#else
-using gapi::own::descr_of;
-#endif
-
-/** @} */
 
 GAPI_EXPORTS std::ostream& operator<<(std::ostream& os, const cv::GMatDesc &desc);
 

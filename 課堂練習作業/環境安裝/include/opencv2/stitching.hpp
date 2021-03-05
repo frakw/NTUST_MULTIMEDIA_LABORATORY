@@ -272,7 +272,7 @@ public:
     @param pano Final pano.
     @return Status code.
      */
-    CV_WRAP Status composePanorama(InputArrayOfArrays images, OutputArray pano);
+    Status composePanorama(InputArrayOfArrays images, OutputArray pano);
 
     /** @overload */
     CV_WRAP Status stitch(InputArrayOfArrays images, OutputArray pano);

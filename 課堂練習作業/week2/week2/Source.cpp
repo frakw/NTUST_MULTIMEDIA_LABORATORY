@@ -8,14 +8,16 @@ int main() {
     cvui::init(WINDOW_NAME);
     cv::Mat frame = cv::Mat(cv::Size(340, 380), CV_8UC3);
 
-    Mat img = imread("Lenna.jpg");
-
+    Mat origin = imread("Lenna.jpg");
+	Mat img;
+	origin.copyTo(img);
     while (cv::getWindowProperty(WINDOW_NAME, 0) >= 0) {
         frame = cv::Scalar(49, 52, 49);
         //cvui::text(frame, 10, 10, "Hello world!");
         //
         if (cvui::button(frame, 10, 10,160,30, "rgb")){
-            img = imread("Lenna.jpg");
+            //img = imread("Lenna.jpg");
+			origin.copyTo(img);
         }
         if (cvui::button(frame, 170, 10, 160, 30, "gray")) {
             for (int i = 0; i < img.rows; i++)

@@ -146,8 +146,7 @@ enum VideoCaptureProperties {
        CAP_PROP_HUE           =13, //!< Hue of the image (only for cameras).
        CAP_PROP_GAIN          =14, //!< Gain of the image (only for those cameras that support).
        CAP_PROP_EXPOSURE      =15, //!< Exposure (only for those cameras that support).
-       CAP_PROP_CONVERT_RGB   =16, //!< Boolean flags indicating whether images should be converted to RGB. <br/>
-                                   //!< *GStreamer note*: The flag is ignored in case if custom pipeline is used. It's user responsibility to interpret pipeline output.
+       CAP_PROP_CONVERT_RGB   =16, //!< Boolean flags indicating whether images should be converted to RGB.
        CAP_PROP_WHITE_BALANCE_BLUE_U =17, //!< Currently unsupported.
        CAP_PROP_RECTIFICATION =18, //!< Rectification flag for stereo cameras (note: only supported by DC1394 v 2.x backend currently).
        CAP_PROP_MONOCHROME    =19,
@@ -177,9 +176,6 @@ enum VideoCaptureProperties {
        CAP_PROP_AUTO_WB       =44, //!< enable/ disable auto white-balance
        CAP_PROP_WB_TEMPERATURE=45, //!< white-balance color temperature
        CAP_PROP_CODEC_PIXEL_FORMAT =46,    //!< (read-only) codec's pixel format. 4-character code - see VideoWriter::fourcc . Subset of [AV_PIX_FMT_*](https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/raw.c) or -1 if unknown
-       CAP_PROP_BITRATE       =47, //!< (read-only) Video bitrate in kbits/s
-       CAP_PROP_ORIENTATION_META=48, //!< (read-only) Frame rotation defined by stream meta (applicable for FFmpeg back-end only)
-       CAP_PROP_ORIENTATION_AUTO=49, //!< if true - rotates output frames of CvCapture considering video file's metadata  (applicable for FFmpeg back-end only) (https://github.com/opencv/opencv/issues/15499)
 #ifndef CV_DOXYGEN
        CV__CAP_PROP_LATEST
 #endif
@@ -191,9 +187,7 @@ enum VideoCaptureProperties {
 enum VideoWriterProperties {
   VIDEOWRITER_PROP_QUALITY = 1,    //!< Current quality (0..100%) of the encoded videostream. Can be adjusted dynamically in some codecs.
   VIDEOWRITER_PROP_FRAMEBYTES = 2, //!< (Read-only): Size of just encoded video frame. Note that the encoding order may be different from representation order.
-  VIDEOWRITER_PROP_NSTRIPES = 3,   //!< Number of stripes for parallel encoding. -1 for auto detection.
-  VIDEOWRITER_PROP_IS_COLOR = 4    //!< If it is not zero, the encoder will expect and encode color frames, otherwise it
-                                   //!< will work with grayscale frames.
+  VIDEOWRITER_PROP_NSTRIPES = 3    //!< Number of stripes for parallel encoding. -1 for auto detection.
 };
 
 //! @} videoio_flags_base
@@ -491,16 +485,6 @@ enum { CAP_PROP_XI_DOWNSAMPLING                                 = 400, //!< Chan
 
 //! @} XIMEA
 
-/** @name XIMEA Camera API
-*  @{
-*/
-
-//! Properties of cameras available through ARAVIS backend
-enum { CAP_PROP_ARAVIS_AUTOTRIGGER                              = 600 //!< Automatically trigger frame capture if camera is configured with software trigger
-};
-
-//! @} ARAVIS
-
 /** @name AVFoundation framework for iOS
     OS X Lion will have the same API
     @{
@@ -637,16 +621,14 @@ public:
     @param filename it can be:
     - name of video file (eg. `video.avi`)
     - or image sequence (eg. `img_%02d.jpg`, which will read samples like `img_00.jpg, img_01.jpg, img_02.jpg, ...`)
-    - or URL of video stream (eg. `protocol://host:port/script_name?script_params|auth`)
-    - or GStreamer pipeline string in gst-launch tool format in case if GStreamer is used as backend
+    - or URL of video stream (eg. `protocol://host:port/script_name?script_params|auth`).
       Note that each video stream or IP camera feed has its own URL scheme. Please refer to the
       documentation of source stream to know the right URL.
     @param apiPreference preferred Capture API backends to use. Can be used to enforce a specific reader
     implementation if multiple are available: e.g. cv::CAP_FFMPEG or cv::CAP_IMAGES or cv::CAP_DSHOW.
-
-    @sa cv::VideoCaptureAPIs
+    @sa The list of supported API backends cv::VideoCaptureAPIs
     */
-    CV_WRAP explicit VideoCapture(const String& filename, int apiPreference = CAP_ANY);
+    CV_WRAP VideoCapture(const String& filename, int apiPreference = CAP_ANY);
 
     /** @overload
     @brief  Opens a camera for video capturing
@@ -656,9 +638,9 @@ public:
     @param apiPreference preferred Capture API backends to use. Can be used to enforce a specific reader
     implementation if multiple are available: e.g. cv::CAP_DSHOW or cv::CAP_MSMF or cv::CAP_V4L.
 
-    @sa cv::VideoCaptureAPIs
+    @sa The list of supported API backends cv::VideoCaptureAPIs
     */
-    CV_WRAP explicit VideoCapture(int index, int apiPreference = CAP_ANY);
+    CV_WRAP VideoCapture(int index, int apiPreference = CAP_ANY);
 
     /** @brief Default destructor
 
@@ -875,12 +857,12 @@ public:
     VideoWriter::fourcc('P','I','M','1') is a MPEG-1 codec, VideoWriter::fourcc('M','J','P','G') is a
     motion-jpeg codec etc. List of codes can be obtained at [Video Codecs by
     FOURCC](http://www.fourcc.org/codecs.php) page. FFMPEG backend with MP4 container natively uses
-    other values as fourcc code: see [ObjectType](http://mp4ra.org/#/codecs),
+    other values as fourcc code: see [ObjectType](http://www.mp4ra.org/codecs.html),
     so you may receive a warning message from OpenCV about fourcc code conversion.
     @param fps Framerate of the created video stream.
     @param frameSize Size of the video frames.
     @param isColor If it is not zero, the encoder will expect and encode color frames, otherwise it
-    will work with grayscale frames.
+    will work with grayscale frames (the flag is currently supported on Windows only).
 
     @b Tips:
     - With some backends `fourcc=-1` pops up the codec selection dialog from the system.
@@ -899,18 +881,6 @@ public:
      */
     CV_WRAP VideoWriter(const String& filename, int apiPreference, int fourcc, double fps,
                 Size frameSize, bool isColor = true);
-
-    /** @overload
-     * The `params` parameter allows to specify extra encoder parameters encoded as pairs (paramId_1, paramValue_1, paramId_2, paramValue_2, ... .)
-     * see cv::VideoWriterProperties
-     */
-    CV_WRAP VideoWriter(const String& filename, int fourcc, double fps, const Size& frameSize,
-                        const std::vector<int>& params);
-
-    /** @overload
-     */
-    CV_WRAP VideoWriter(const String& filename, int apiPreference, int fourcc, double fps,
-                        const Size& frameSize, const std::vector<int>& params);
 
     /** @brief Default destructor
 
@@ -933,16 +903,6 @@ public:
      */
     CV_WRAP bool open(const String& filename, int apiPreference, int fourcc, double fps,
                       Size frameSize, bool isColor = true);
-
-    /** @overload
-     */
-    CV_WRAP bool open(const String& filename, int fourcc, double fps, const Size& frameSize,
-                      const std::vector<int>& params);
-
-    /** @overload
-     */
-    CV_WRAP bool open(const String& filename, int apiPreference, int fourcc, double fps,
-                      const Size& frameSize, const std::vector<int>& params);
 
     /** @brief Returns true if video writer has been successfully initialized.
     */

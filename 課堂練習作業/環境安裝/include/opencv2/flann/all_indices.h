@@ -130,9 +130,6 @@ struct index_creator<False,False,Distance>
         case FLANN_INDEX_LINEAR:
             nnIndex = new LinearIndex<Distance>(dataset, params, distance);
             break;
-        case FLANN_INDEX_KMEANS:
-            nnIndex = new KMeansIndex<Distance>(dataset, params, distance);
-            break;
         case FLANN_INDEX_HIERARCHICAL:
             nnIndex = new HierarchicalClusteringIndex<Distance>(dataset, params, distance);
             break;

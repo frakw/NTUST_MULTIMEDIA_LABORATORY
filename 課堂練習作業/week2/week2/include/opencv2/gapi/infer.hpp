@@ -14,7 +14,6 @@
 #include <functional>
 #include <string>  // string
 #include <utility> // tuple
-#include <type_traits> // is_same, false_type
 
 #include <opencv2/gapi/util/any.hpp>  // any<>
 #include <opencv2/gapi/gkernel.hpp>   // GKernelType[M], GBackend
@@ -24,44 +23,24 @@
 
 namespace cv {
 
-template<typename, typename> class GNetworkType;
-
 namespace detail {
+    // This tiny class eliminates the semantic difference between
+    // GKernelType and GKernelTypeM.
+    // FIXME: Something similar can be reused for regular kernels
     template<typename, typename>
-    struct valid_infer2_types;
+    struct KernelTypeMedium;
 
-    // Terminal case 1 (50/50 success)
-    template<typename T>
-    struct valid_infer2_types< std::tuple<cv::GMat>, std::tuple<T> > {
-        // By default, Nets are limited to GMat argument types only
-        // for infer2, every GMat argument may translate to either
-        // GArray<GMat> or GArray<Rect>. GArray<> part is stripped
-        // already at this point.
-        static constexpr const auto value =
-                std::is_same<typename std::decay<T>::type, cv::GMat>::value
-             || std::is_same<typename std::decay<T>::type, cv::Rect>::value;
-    };
+    template<class K, typename... R, typename... Args>
+    struct KernelTypeMedium<K, std::function<std::tuple<R...>(Args...)> >:
+        public GKernelTypeM<K, std::function<std::tuple<R...>(Args...)> > {};
 
-    // Terminal case 2 (100% failure)
-    template<typename... Ts>
-    struct valid_infer2_types< std::tuple<>, std::tuple<Ts...> >
-        : public std::false_type {
-    };
+    template<class K, typename R, typename... Args>
+    struct KernelTypeMedium<K, std::function<R(Args...)> >:
+        public GKernelType<K, std::function<R(Args...)> > {};
 
-    // Terminal case 3 (100% failure)
-    template<typename... Ns>
-    struct valid_infer2_types< std::tuple<Ns...>, std::tuple<> >
-        : public std::false_type {
-    };
-
-    // Recursion -- generic
-    template<typename... Ns, typename T, typename...Ts>
-    struct valid_infer2_types< std::tuple<cv::GMat,Ns...>, std::tuple<T,Ts...> > {
-        static constexpr const auto value =
-               valid_infer2_types< std::tuple<cv::GMat>, std::tuple<T> >::value
-            && valid_infer2_types< std::tuple<Ns...>, std::tuple<Ts...> >::value;
-    };
 } // namespace detail
+
+template<typename, typename> class GNetworkType;
 
 // TODO: maybe tuple_wrap_helper from util.hpp may help with this.
 // Multiple-return-value network definition (specialized base class)
@@ -94,17 +73,6 @@ public:
     using APIList = std::function<ResultL(cv::GArray<cv::Rect>, Args...)>;
 };
 
-// APIList2 is also template to allow different calling options
-// (GArray<cv::Rect> vs GArray<cv::GMat> per input)
-template<class Net, class... Ts>
-struct InferAPIList2 {
-    using type = typename std::enable_if
-        < cv::detail::valid_infer2_types< typename Net::InArgs
-                                        , std::tuple<Ts...> >::value,
-          std::function<typename Net::ResultL(cv::GMat, cv::GArray<Ts>...)>
-        >::type;
-};
-
 // Base "Infer" kernel. Note - for whatever network, kernel ID
 // is always the same. Different inference calls are distinguished by
 // network _tag_ (an extra field in GCall)
@@ -121,65 +89,15 @@ struct GInferBase {
     }
 };
 
-// Struct stores network input/output names.
-// Used by infer<Generic>
-struct InOutInfo
-{
-    std::vector<std::string> in_names;
-    std::vector<std::string> out_names;
-};
-
-/**
- * @{
- * @brief G-API object used to collect network inputs
- */
-class GAPI_EXPORTS GInferInputs
-{
-public:
-    cv::GMat& operator[](const std::string& name);
-    const std::unordered_map<std::string, cv::GMat>& getBlobs() const;
-
-private:
-    std::unordered_map<std::string, cv::GMat> in_blobs;
-};
-/** @} */
-
-/**
- * @{
- * @brief G-API object used to collect network outputs
- */
-struct GAPI_EXPORTS GInferOutputs
-{
-public:
-    GInferOutputs(std::shared_ptr<cv::GCall> call);
-    cv::GMat at(const std::string& name);
-
-private:
-    std::shared_ptr<cv::GCall> m_call;
-    InOutInfo* m_info = nullptr;
-    std::unordered_map<std::string, cv::GMat> out_blobs;
-};
-/** @} */
 
 // Base "Infer list" kernel.
 // All notes from "Infer" kernel apply here as well.
 struct GInferListBase {
     static constexpr const char * id() {
-        return "org.opencv.dnn.infer-roi";      // Universal stub
+        return "org.opencv.dnn.infer-roi"; // Universal stub
     }
     static GMetaArgs getOutMeta(const GMetaArgs &, const GArgs &) {
-        return GMetaArgs{};                     // One more universal stub
-    }
-};
-
-// Base "Infer list 2" kernel.
-// All notes from "Infer" kernel apply here as well.
-struct GInferList2Base {
-    static constexpr const char * id() {
-        return "org.opencv.dnn.infer-roi-list"; // Universal stub
-    }
-    static GMetaArgs getOutMeta(const GMetaArgs &, const GArgs &) {
-        return GMetaArgs{};                     // One more universal stub
+        return GMetaArgs{};                // One more universal stub
     }
 };
 
@@ -204,21 +122,6 @@ struct GInferList final
     , public detail::KernelTypeMedium< GInferList<Net>
                                      , typename Net::APIList > {
     using GInferListBase::getOutMeta; // FIXME: name lookup conflict workaround?
-
-    static constexpr const char* tag() { return Net::tag(); }
-};
-
-// An even more generic roi-list inference kernel. API (::on()) is
-// derived from the Net template parameter (see more in infer<>
-// overload).
-// Takes an extra variadic template list to reflect how this network
-// was called (with Rects or GMats as array parameters)
-template<typename Net, typename... Args>
-struct GInferList2 final
-    : public GInferList2Base
-    , public detail::KernelTypeMedium< GInferList2<Net, Args...>
-                                     , typename InferAPIList2<Net, Args...>::type > {
-    using GInferList2Base::getOutMeta; // FIXME: name lookup conflict workaround?
 
     static constexpr const char* tag() { return Net::tag(); }
 };
@@ -253,30 +156,6 @@ typename Net::ResultL infer(cv::GArray<cv::Rect> roi, Args&&... args) {
     return GInferList<Net>::on(roi, std::forward<Args>(args)...);
 }
 
-/** @brief Calculates responses for the specified network (template
- *     parameter) for every region in the source image, extended version.
- *
- * @tparam A network type defined with G_API_NET() macro.
- * @param image A source image containing regions of interest
- * @param args GArray<> objects of cv::Rect or cv::GMat, one per every
- * network input:
- * - If a cv::GArray<cv::Rect> is passed, the appropriate
- *   regions are taken from `image` and preprocessed to this particular
- *   network input;
- * - If a cv::GArray<cv::GMat> is passed, the underlying data traited
- *   as tensor (no automatic preprocessing happen).
- * @return a list of objects of return type as defined in G_API_NET().
- *   If a network has multiple return values (defined with a tuple), a tuple of
- *   GArray<> objects is returned with the appropriate types inside.
- * @sa  G_API_NET()
- */
-template<typename Net, typename... Args>
-typename Net::ResultL infer2(cv::GMat image, cv::GArray<Args>... args) {
-    // FIXME: Declared as "2" because in the current form it steals
-    // overloads from the regular infer
-    return GInferList2<Net, Args...>::on(image, args...);
-}
-
 /**
  * @brief Calculates response for the specified network (template
  *     parameter) given the input data.
@@ -293,45 +172,6 @@ typename Net::Result infer(Args&&... args) {
     return GInfer<Net>::on(std::forward<Args>(args)...);
 }
 
-/**
- * @brief Special network type
- */
-struct Generic { };
-
-/**
- * @brief Calculates response for generic network
- *
- * @param tag a network tag
- * @param inputs networks's inputs
- * @return a GInferOutputs
- */
-template<typename T = Generic> GInferOutputs
-infer(const std::string& tag, const GInferInputs& inputs)
-{
-    std::vector<GArg> input_args;
-    std::vector<std::string> input_names;
-
-    const auto& blobs = inputs.getBlobs();
-    for (auto&& p : blobs)
-    {
-        input_names.push_back(p.first);
-        input_args.emplace_back(p.second);
-    }
-
-    GKinds kinds(blobs.size(), cv::detail::OpaqueKind::CV_MAT);
-    auto call = std::make_shared<cv::GCall>(GKernel{
-                GInferBase::id(),
-                tag,
-                GInferBase::getOutMeta,
-                {}, // outShape will be filled later
-                std::move(kinds)
-            });
-
-    call->setArgs(std::move(input_args));
-    call->params() = InOutInfo{input_names, {}};
-
-    return GInferOutputs{std::move(call)};
-}
 
 } // namespace gapi
 } // namespace cv

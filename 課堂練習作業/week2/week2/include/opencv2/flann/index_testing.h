@@ -34,6 +34,7 @@
 //! @cond IGNORED
 
 #include <cstring>
+#include <cassert>
 #include <cmath>
 
 #include "matrix.h"

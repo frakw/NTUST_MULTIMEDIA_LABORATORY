@@ -1,4 +1,4 @@
-inlcude與lib資料夾放到專案預設根目錄\
+inlcude與lib資料夾放到工程目錄\
 ![image](include_and_lib.PNG)\
 組態:所有組態	平台:所有平台\
 屬性->VC++->Include目錄 => 加入include、include\opencv2\
@@ -16,3 +16,6 @@ inlcude與lib資料夾放到專案預設根目錄\
 組態:Release	平台:所有平台\
 屬性->連結器->輸入 => 加入opencv_world450.lib\
 ![image](release.PNG)\
+
+將dll資料夾中的所有.dll檔放到工程目錄下\
+![image](dll.PNG)\
