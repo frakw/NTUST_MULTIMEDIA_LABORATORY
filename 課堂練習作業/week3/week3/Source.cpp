@@ -66,8 +66,8 @@ void median_filter(Mat& img, int filter_height, int filter_width) {
         return (y * img.cols + x) * 3 + color;
     };
 
-    for (int i = 0;i < img.rows;i+= filter_height) {
-        for (int j = 0;j < img.cols;j+= filter_width) {
+    for (int i = 0;i < img.rows;i++) {
+        for (int j = 0;j < img.cols;j++) {
             for (int k = 0;k < filter_height;k++) {
                 for (int g = 0;g < filter_width;g++) {
                     int x = j + g;
@@ -91,27 +91,16 @@ void median_filter(Mat& img, int filter_height, int filter_width) {
             std::sort(all_valG.begin(), all_valG.end());
             std::sort(all_valR.begin(), all_valR.end());
             int size = filter_height * filter_width;
-            unsigned char resultB;
-            unsigned char resultG;
-            unsigned char resultR;
             if (size % 2 == 0){
-                resultB = all_valB[size / 2 - 1] + all_valB[size / 2] / 2;
-                resultG = all_valG[size / 2 - 1] + all_valG[size / 2] / 2;
-                resultR = all_valR[size / 2 - 1] + all_valR[size / 2] / 2;
+                new_data[index_of_pixel(j, i, BLUE)] = all_valB[size / 2 - 1] + all_valB[size / 2] / 2;
+                new_data[index_of_pixel(j, i, GREEN)] = all_valG[size / 2 - 1] + all_valG[size / 2] / 2;
+                new_data[index_of_pixel(j, i, RED)] = all_valR[size / 2 - 1] + all_valR[size / 2] / 2;
             }
             else
             {
-                resultB = all_valB[size / 2];
-                resultG = all_valG[size / 2];
-                resultR = all_valR[size / 2];
-            }
-
-            for (int ii = i;i < i + filter_height;ii++) {
-                for (int jj = j;j < j+filter_width;jj++) {
-                    new_data[index_of_pixel(jj, ii, BLUE)] = resultB;
-                    new_data[index_of_pixel(jj, ii, GREEN)] = resultG;
-                    new_data[index_of_pixel(jj, ii, RED)] = resultR;
-                }
+                new_data[index_of_pixel(j, i, BLUE)] = all_valB[size / 2];
+                new_data[index_of_pixel(j, i, GREEN)] = all_valG[size / 2];
+                new_data[index_of_pixel(j, i, RED)] = all_valR[size / 2];
             }
         }
     }
