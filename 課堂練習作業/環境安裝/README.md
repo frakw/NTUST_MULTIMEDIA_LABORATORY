@@ -21,7 +21,7 @@ inlcude與lib資料夾放到工程目錄\
 ![image](dll.PNG)\
 
 將組態改為x64\
-![image](x64.PNG)\
+![image](x64.png)\
 
 將Lenna.jpg放到工程目錄下，並測試程式:
 ```cpp
@@ -36,7 +36,7 @@ waitKey();
 ```
 
 運行結果:\
-![image](finish.PNG)\
+![image](finish.png)\
 
 UI安裝:\
 將cvui.h放到工程目錄下\
