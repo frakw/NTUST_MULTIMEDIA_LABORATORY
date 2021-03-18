@@ -1,27 +1,29 @@
+到OPENCV官網安裝4.2.0版https://opencv.org/releases/
+
 inlcude與lib資料夾放到工程目錄\
 ![image](include_and_lib.PNG)\
 組態:所有組態	平台:所有平台\
-屬性->VC++->Include目錄 => 加入include\、include\opencv2\\\
+屬性->VC++->Include目錄 => 加入include\\\
 ![image](include.PNG)\
 屬性->VC++->程式庫目錄 => 加入lib\\\
 ![image](lib.PNG)\
 完成後按下套用:\
-![image](all.PNG)\
+![image](all.PNG)
 
 
 組態:Debug	平台:所有平台\
 屬性->連結器->輸入 => 加入opencv_world420d.lib\
-![image](debug.PNG)\
+![image](debug.PNG)
 
 組態:Release	平台:所有平台\
 屬性->連結器->輸入 => 加入opencv_world420.lib\
-![image](release.PNG)\
+![image](release.PNG)
 
 將dll資料夾中的所有.dll檔放到工程目錄下\
-![image](dll.PNG)\
+![image](dll.PNG)
 
 將組態改為x64\
-![image](x64.png)\
+![image](x64.png)
 
 將Lenna.jpg放到工程目錄下，並測試程式:
 ```cpp
@@ -36,12 +38,13 @@ waitKey();
 ```
 
 運行結果:\
-![image](finish.png)\
+![image](finish.png)
 
 UI安裝:\
 將cvui.h放到工程目錄下\
 標頭檔加入cvui.h\
-![image](cvui_header.PNG)\
+![image](cvui_header.PNG)
+
 並測試程式:\
 ```cpp
 #include <opencv2/opencv.hpp>
@@ -52,7 +55,7 @@ UI安裝:\
 using namespace cv;
 int main() {
     cvui::init(WINDOW_NAME);
-    cv::Mat frame = cv::Mat(cv::Size(340, 380), CV_8UC3);
+    cv::Mat frame = cv::Mat(cv::Size(550, 580), CV_8UC3);
 
     Mat origin = imread("Lenna.jpg");
     Mat img;
