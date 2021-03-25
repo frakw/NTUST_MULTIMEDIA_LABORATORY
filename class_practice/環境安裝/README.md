@@ -158,7 +158,7 @@ int main() {
 }
 ```
 windows選取檔案視窗:\
-![image](pfd_loading.png)
+![image](pfd_loading.PNG)
 
 成功讀取圖片:\
 ![image](pfd_loaded.png)
