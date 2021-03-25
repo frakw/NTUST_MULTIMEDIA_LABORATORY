@@ -104,7 +104,7 @@ int main() {
 ![image](pfd_header.PNG)
 
 並測試程式:
-```
+```cpp
 #include <opencv2/opencv.hpp>
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"
