@@ -147,9 +147,6 @@ int main() {
             uchar final_table[256][3] = { 0 };
 
             for (int i = 0; i < 256; i++) {
-                double min0 = 999.0f;
-                double min1 = 999.0f;
-                double min2 = 999.0f;
                 if (source_table[i][0] > target_table[0][0]) {
                     final_table[i][0] = 0;
                 }
