@@ -150,21 +150,26 @@ int main() {
                 double min0 = 999.0f;
                 double min1 = 999.0f;
                 double min2 = 999.0f;
-                for (int j = 0; j < 256; j++) {
-                    if (fabs(source_table[i][0] - target_table[j][0]) < min0) {
-                        min0 = fabs(source_table[i][0] - target_table[j][0]);
-                        final_table[i][0] = j;
-                    }
-
-                    if (fabs(source_table[i][1] - target_table[j][1]) < min1) {
-                        min1 = fabs(source_table[i][1] - target_table[j][1]);
-                        final_table[i][1] = j;
-                    }
-
-                    if (fabs(source_table[i][2] - target_table[j][2]) < min2) {
-                        min2 = fabs(source_table[i][2] - target_table[j][2]);
-                        final_table[i][2] = j;
-                    }
+                if (source_table[i][0] > target_table[0][0]) {
+                    final_table[i][0] = 0;
+                }
+                if (source_table[i][1] > target_table[0][1]) {
+                    final_table[i][1] = 0;
+                }
+                if (source_table[i][2] > target_table[0][2]) {
+                    final_table[i][2] = 0;
+                }
+                for (int j = 1; j < 256; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        if (source_table[i][k] <= target_table[j][k] && source_table[i][k] >= target_table[j - 1][k]) {
+                            if (source_table[i][k] - target_table[j - 1][k] >= target_table[j][k] - source_table[i][k]) {
+                                final_table[i][k] = j;
+                            }
+                            else {
+                                final_table[i][k] = j - 1;
+                            }
+                        }
+                    }               
                 }
             }
 
