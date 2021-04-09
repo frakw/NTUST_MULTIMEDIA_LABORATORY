@@ -3,9 +3,10 @@
 #include "cvui.h"
 #include "portable-file-dialogs.h"
 #if _WIN32
-#define DEFAULT_PATH "./"
+    #include <windows.h>
+    #define DEFAULT_PATH "./"
 #else
-#define DEFAULT_PATH "/tmp"
+    #define DEFAULT_PATH "/tmp"
 #endif
 
 #define WINDOW_NAME "Morphology"
@@ -13,6 +14,9 @@ using namespace cv;
 
 int main() {
     std::locale loc = std::locale::global(std::locale(""));
+#if _WIN32
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
     cvui::init(WINDOW_NAME);
     cv::Mat frame = cv::Mat(cv::Size(1050, 750), CV_8UC3);
     Mat reversi;
@@ -20,7 +24,6 @@ int main() {
     Mat morphology;
     Mat morphology_rgb;
     int number_of_piece = -1;
-    bool has_thresh = false;
     while (cv::getWindowProperty(WINDOW_NAME, 0) >= 0) {
         frame = cv::Scalar(49, 52, 49);
 
@@ -36,6 +39,8 @@ int main() {
                 reversi = imread(filename,0);
                 double resize_value = 500.0f / reversi.cols < 620.0f / reversi.rows ? 500.0f / reversi.cols : 620.0f / reversi.rows;
                 resize(reversi, reversi, cv::Size(), resize_value, resize_value);
+                GaussianBlur(reversi, reversi, Size(5, 5), 0, 0);
+                threshold(reversi, reversi, 0, 255, THRESH_BINARY_INV | THRESH_OTSU); // 二值化
                 number_of_piece = -1;
             }
         }
@@ -51,16 +56,13 @@ int main() {
                 morphology = imread(filename,0);
                 double resize_value = 500.0f / morphology.cols < 620.0f / morphology.rows ? 500.0f / morphology.cols : 620.0f / morphology.rows;
                 resize(morphology, morphology, cv::Size(), resize_value, resize_value);
-                has_thresh = false;
+                threshold(morphology, morphology, 0, 255, THRESH_BINARY_INV | THRESH_OTSU); // 二值化
             }
         }
         if (cvui::button(frame, 10, 50, 500, 30, "calculate number of piece") && !reversi.empty()) {
-            GaussianBlur(reversi, reversi, Size(5, 5), 0, 0);
-            threshold(reversi, reversi, 0, 255, THRESH_BINARY_INV | THRESH_OTSU); // 二值化
             Mat mask;
             mask = cv::getStructuringElement(MORPH_RECT, Size(5, 5));
             erode(reversi, reversi, mask, Point(-1, -1), 6);
-
             Mat labels;
             number_of_piece = connectedComponents(reversi, labels);
         }
@@ -68,10 +70,6 @@ int main() {
             int filter_height = 5;
             int filter_width = 5;
             Mat result;
-            if (!has_thresh) {
-                threshold(morphology, morphology, 0, 255, THRESH_BINARY_INV | THRESH_OTSU); // 二值化
-                has_thresh = true;
-            }
             result = morphology.clone();
             for (int i = 0; i < morphology.rows; i++) {
                 for (int j = 0; j < morphology.cols; j++) {
@@ -109,10 +107,6 @@ int main() {
             int filter_height = 5;
             int filter_width = 5;
             Mat result;
-            if (!has_thresh) {
-                threshold(morphology, morphology, 0, 255, THRESH_BINARY_INV | THRESH_OTSU); // 二值化
-                has_thresh = true;
-            }
             result = morphology.clone();
             for (int i = 0; i < morphology.rows; i++) {
                 for (int j = 0; j < morphology.cols; j++) {
